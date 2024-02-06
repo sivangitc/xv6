@@ -43,6 +43,19 @@ proc_mapstacks(pagetable_t kpgtbl)
   }
 }
 
+int nproc(void)
+{
+  struct proc* p;
+  int cnt = 0;
+
+  for (p = proc; p < &proc[NPROC]; p++)
+  {
+    if (p->state != UNUSED)
+      cnt++;
+  }
+  return cnt;
+}
+
 // initialize the proc table.
 void
 procinit(void)
@@ -124,6 +137,7 @@ allocproc(void)
 found:
   p->pid = allocpid();
   p->state = USED;
+  p->mask = 0;
 
   // Allocate a trapframe page.
   if((p->trapframe = (struct trapframe *)kalloc()) == 0){
@@ -163,6 +177,7 @@ freeproc(struct proc *p)
   p->pagetable = 0;
   p->sz = 0;
   p->pid = 0;
+  p->mask = 0;
   p->parent = 0;
   p->name[0] = 0;
   p->chan = 0;
@@ -295,6 +310,7 @@ fork(void)
     return -1;
   }
   np->sz = p->sz;
+  np->mask = p->mask;
 
   // copy saved user registers.
   *(np->trapframe) = *(p->trapframe);
